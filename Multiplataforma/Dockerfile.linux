@@ -1,0 +1,10 @@
+# Imatge de compilació per a Linux (amd64).
+# Ús (des de macOS o Linux, amb Docker):
+#   docker build -f Dockerfile.linux -t la-tonica-linux .
+#   docker run --rm -v $(pwd)/dist:/out la-tonica-linux \
+#       cp /pkg/.build/release/laTonicaCLI /out/laTonicaCLI-linux
+FROM swift:5.9-jammy
+WORKDIR /pkg
+COPY Package.swift ./
+COPY Sources ./Sources
+RUN swift build -c release

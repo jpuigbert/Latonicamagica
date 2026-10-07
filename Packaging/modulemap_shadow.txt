@@ -1,0 +1,3 @@
+// Ombra del module.modulemap duplicat del Command Line Tools.
+// Contingut sense cap directiva #include ni module: clang ignora
+// aquest fitxer, evitant la redefinició del mòdul 'SwiftBridging'.

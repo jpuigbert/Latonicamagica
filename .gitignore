@@ -1,0 +1,25 @@
+# Artefactes de compilació
+.build/
+build/
+build-install/
+Multiplataforma/.build/
+Multiplataforma/dist/
+Packaging/clt_overlay.yaml
+
+# Log de diagnòstic
+*.log
+
+# macOS
+.DS_Store
+._*
+
+# Python
+__pycache__/
+*.pyc
+
+# Editors
+.vscode/
+.idea/
+
+# Font local de la wiki (es publica al repositori separat .wiki.git)
+.wiki-src/

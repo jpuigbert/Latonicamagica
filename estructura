@@ -1,0 +1,31 @@
+LaTonicaEnCadena/
+│
+├── LaTonicaEnCadenaApp.swift
+│
+├── Models/
+│   ├── TipusTonica.swift
+│   ├── Paraula.swift
+│   └── Player.swift
+│
+├── Data/
+│   ├── DiccionariLocal.swift
+│   └── APIResponse.swift
+│
+├── Services/
+│   ├── DictionaryAPI.swift
+│   ├── DictionaryService.swift
+│   └── MusicService.swift
+│
+├── ViewModels/
+│   └── GameViewModel.swift
+│
+└── Views/
+    ├── Theme.swift
+    ├── ContentView.swift
+    ├── MarcadorView.swift
+    ├── ParaulaView.swift
+    ├── ClassificacioView.swift
+    ├── FeedbackView.swift
+    ├── MusicControlsView.swift
+    ├── MusicSettingsView.swift
+    └── ControlsView.swift
