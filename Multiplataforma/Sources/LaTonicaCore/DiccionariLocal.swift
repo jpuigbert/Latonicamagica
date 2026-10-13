@@ -4,9 +4,9 @@ import Foundation
 // Cada paraula ha estat verificada automaticament per la posicio
 // de la silaba tonica (regles ortografiques del catala).
 
-enum DiccionariLocal {
+public enum DiccionariLocal {
     
-    static var totes: [Paraula] {
+    public static var totes: [Paraula] {
         agudes + planes + esdruixoles + sobresdruixoles
     }
     
