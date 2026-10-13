@@ -4,7 +4,17 @@ build/
 build-install/
 Multiplataforma/.build/
 Multiplataforma/dist/
+Multiplataforma/out/
+Multiplataforma/pkg/
 Packaging/clt_overlay.yaml
+
+# Paquets de distribució generats localment
+tmppackage/
+dmgroot/
+pkg-linux/
+*.dmg
+*.tar.gz
+LaTonicaMagica-macOS-*.zip
 
 # Log de diagnòstic
 *.log

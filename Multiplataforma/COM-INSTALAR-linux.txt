@@ -1,0 +1,11 @@
+La Tònica Màgica — versió per a Linux (terminal)
+
+1) Descomprimeix aquest paquet (carpeta LaTonicaCLI).
+2) Obre una terminal dins la carpeta i fes el programa executable:
+      chmod +x laTonicaCLI-linux
+3) Executa'l:
+      ./laTonicaCLI-linux
+   Respon 1-4 per triar el tipus de paraula, 'p' puntuació, 's' sortir.
+
+Si veus accents/emoji com a «?», activa UTF-8:   export LANG=C.UTF-8
+Requereix Linux de 64 bits (x86-64). No cal res més instal·lat.
