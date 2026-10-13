@@ -1,12 +1,13 @@
 name: Release builds
 
-# Compila La Tònica Màgica per a macOS (DMG), Linux (tar.gz) i Windows (exe)
-# i adjunta els binaris al release de GitHub indicat.
+# Compila La Tònica Màgica per a Linux (tar.gz) i Windows (exe) i adjunta els
+# binaris al release de GitHub indicat. (La versió macOS es construeix des del
+# mateix Mac amb ./build_app.sh i s'adjunta com a DMG; la CI no corre en un Mac
+# Intel, per això no la regenera aquí.)
 #
 # Disparadors:
-#   - En publicar un release (automàtic, usa l'etiqueta del release).
-#   - Manualment (workflow_dispatch) indicant a quina etiqueta pujar els assets.
-#     Exemple:  gh workflow run release-builds.yml --ref main -f tag=v1.0.0
+#   - En publicar un release (automàtic; usa l'etiqueta del release).
+#   - Manualment:  gh workflow run release-builds.yml --ref main -f tag=v1.0.0
 
 on:
   release:
@@ -18,37 +19,16 @@ on:
         required: true
         default: "v1.0.0"
 
-# El codi compilat surt de la ref on s'executa el workflow (per defecte main,
-# que inclou la correcció `public` necessària per a SPM); els assets van a
-# l'etiqueta indicada a `tag`.
-
 jobs:
-  # ------------------------------------------------------------------ macOS
-  macos:
-    name: Build · macOS (DMG)
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-      - name: Compila i empaqueta el DMG
-        run: |
-          set -euo pipefail
-          ./build_app.sh "$PWD/tmppackage"
-          rm -rf dmgroot && mkdir dmgroot
-          cp -R "tmppackage/La Tònica Màgica.app" dmgroot/
-          ln -s /Applications dmgroot/Applications
-          hdiutil create -volname "LaTonicaMagica" -srcfolder dmgroot -ov \
-            -format UDZO "LaTonicaMagica-macOS.dmg"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-dmg
-          path: LaTonicaMagica-macOS.dmg
-
   # ------------------------------------------------------------------ Linux
   linux:
     name: Build · Linux (tar.gz)
     runs-on: ubuntu-latest
     container:
       image: swift:5.9-jammy
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - name: Compila el CLI amb SwiftPM
@@ -58,9 +38,10 @@ jobs:
           swift build -c release
           mkdir -p out/LaTonicaCLI
           cp "$(swift build -c release --show-bin-path)/laTonicaCLI" out/LaTonicaCLI/laTonicaCLI-linux
-          cp COM-INSTALAR-linux.txt out/LaTonicaCLI/ 2>/dev/null || true
+          cp COM-INSTALAR-linux.txt out/LaTonicaCLI/
       - name: Crea el tar.gz
         run: |
+          set -euo pipefail
           cd Multiplataforma/out && tar czf ../../LaTonicaCLI-linux.tar.gz LaTonicaCLI
       - uses: actions/upload-artifact@v4
         with:
@@ -80,23 +61,28 @@ jobs:
           $url = "https://download.swift.org/swift-5.9.2-release/windows10/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-windows10.exe"
           Invoke-WebRequest $url -OutFile "$env:RUNNER_TEMP\swift.exe"
           Start-Process -FilePath "$env:RUNNER_TEMP\swift.exe" -ArgumentList "/S" -Wait
-          # Localitza el binari swift.exe instal·lat i afegeix-ne la carpeta al PATH
-          $bin = (Get-ChildItem -Path "C:\" -Recurse -Filter swift.exe -ErrorAction SilentlyContinue |
-                  Where-Object { $_.FullName -like "*\usr\bin\*" } | Select-Object -First 1).DirectoryName
-          Add-Content -Path $env:GITHUB_PATH -Value $bin
-          Write-Host "Swift a: $bin"
-      - name: Verifica Swift
-        shell: pwsh
-        run: swift --version
+          # Localitza el toolchain instal·lat (només cal mirar dins C:\Library, ràpid)
+          $bin = (Get-ChildItem "C:\Library\Developer\Toolchains" -Recurse -Filter swift.exe -ErrorAction SilentlyContinue |
+                  Where-Object { $_.FullName -match '\\usr\\bin\\' } | Select-Object -First 1).DirectoryName
+          "SWIFT_BIN=$bin"    | Out-File -FilePath $env:GITHUB_ENV  -Append -Encoding utf8
+          $bin                 | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          Write-Host "Swift toolchain a: $bin"
+          & "$bin\swift.exe" --version
       - name: Compila el CLI
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          # Carrega l'entorn de Visual Studio (cl/link + SDK) perquè SwiftPM pugui enllaçar.
+          $vs = & "${env:ProgramFiles}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          Import-Module (Join-Path $vs "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
+          $env:Path = "$env:SWIFT_BIN;$env:Path"
           Set-Location Multiplataforma
-          swift build -c release
-          $bin = (swift build -c release --show-bin-path)
+          & "$env:SWIFT_BIN\swift.exe" build -c release
+          $binpath = & "$env:SWIFT_BIN\swift.exe" build -c release --show-bin-path
           New-Item -ItemType Directory -Force -Path pkg\LaTonicaCLI | Out-Null
-          Copy-Item "$bin\laTonicaCLI.exe" pkg\LaTonicaCLI\laTonicaCLI-windows.exe
+          Copy-Item "$binpath\laTonicaCLI.exe" pkg\LaTonicaCLI\laTonicaCLI-windows.exe
+          Copy-Item COM-INSTALAR-windows.txt pkg\LaTonicaCLI\ -ErrorAction SilentlyContinue
       - name: Empaqueta el ZIP
         shell: pwsh
         run: Compress-Archive -Path Multiplataforma\pkg\LaTonicaCLI -DestinationPath LaTonicaCLI-windows.zip -Force
@@ -108,7 +94,7 @@ jobs:
   # --------------------------------------------------------------- Publicació
   publish:
     name: Puja els binaris al release
-    needs: [macos, linux, windows]
+    needs: [linux, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -124,10 +110,8 @@ jobs:
           TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
         run: |
           set -euo pipefail
-          VER="${TAG#v}"
-          mv assets/LaTonicaMagica-macOS.dmg      assets/LaTonicaMagica-macOS-${TAG}.dmg
-          mv assets/LaTonicaCLI-linux.tar.gz      assets/LaTonicaCLI-linux-${TAG}.tar.gz
-          mv assets/LaTonicaCLI-windows.zip       assets/LaTonicaCLI-windows-${TAG}.zip
+          mv assets/LaTonicaCLI-linux.tar.gz   assets/LaTonicaCLI-linux-${TAG}.tar.gz
+          mv assets/LaTonicaCLI-windows.zip    assets/LaTonicaCLI-windows-${TAG}.zip
           gh release upload "$TAG" assets/* --clobber
           echo "Assets publicats per a $TAG:"
           gh release view "$TAG" --json assets --jq '.assets[].name'

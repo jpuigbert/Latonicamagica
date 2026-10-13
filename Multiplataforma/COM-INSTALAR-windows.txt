@@ -1,0 +1,11 @@
+La Tònica Màgica — versió per a Windows (terminal)
+
+1) Descomprimeix aquest ZIP (carpeta LaTonicaCLI).
+2) Fes doble clic a «laTonicaCLI-windows.exe»  ·  o bé obre el «Símbol del
+   sistema» (cmd) a la carpeta i executa:
+      laTonicaCLI-windows.exe
+   Respon 1-4 per triar el tipus de paraula, 'p' puntuació, 's' sortir.
+
+Si veus accents/emoji estranys, executa primer a la consola:   chcp 65001
+Windows 10/11 de 64 bits. Si Windows SmartScreen s'hi oposa, clic a «Més
+informació» > «Executa igualment» (binari sense signatura comercial).
