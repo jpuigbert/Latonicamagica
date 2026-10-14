@@ -73,7 +73,7 @@ jobs:
           $ErrorActionPreference = "Continue"
           # Python és necessari pel driver de Swift a Windows.
           (Get-Command python -ErrorAction SilentlyContinue) | Out-Null
-          $url = "https://download.swift.org/swift-5.9.2-release/windows10/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-windows10.exe"
+          $url = "https://download.swift.org/swift-5.10.1-release/windows10/swift-5.10.1-RELEASE/swift-5.10.1-RELEASE-windows10.exe"
           Invoke-WebRequest $url -OutFile "$env:RUNNER_TEMP\swift.exe"
           $p = Start-Process -FilePath "$env:RUNNER_TEMP\swift.exe" -ArgumentList "/S" -Wait -PassThru
           Write-Host "Installer exit: $($p.ExitCode)"
