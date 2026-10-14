@@ -57,6 +57,16 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+      - name: Instal·la el Visual C++ Redistributable (DLLs de runtime)
+        shell: pwsh
+        # La toolchain Swift per a Windows enllaça contra vcruntime140/msvcp140.
+        # Sense aquestes DLLs, «swift.exe» mor amb 0xC0000135 (STATUS_DLL_NOT_FOUND).
+        run: |
+          $ErrorActionPreference = "Continue"
+          $vc = "$env:RUNNER_TEMP\vc_redist.x64.exe"
+          Invoke-WebRequest "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vc
+          $p = Start-Process -FilePath $vc -ArgumentList "/install /quiet /norestart" -Wait -PassThru
+          Write-Host "vc_redist exit: $($p.ExitCode)"
       - name: Instal·la el Swift toolchain per a Windows
         shell: pwsh
         run: |
