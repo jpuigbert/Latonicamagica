@@ -16,7 +16,8 @@ Ves a la pestanya **[Releases](https://github.com/jpuigbert/Latonicamagica/relea
 |---|---|---|
 | **macOS** | `LaTonicaMagica-macOS-v1.0.0.dmg` | Obre el DMG i **arrossega l'app a la carpeta Aplicacions** (com qualsevol programeta de Mac). |
 | **Linux** (64 bits) | `LaTonicaCLI-linux-v1.0.0.tar.gz` | Descomprimeix, i a la carpeta executa `chmod +x laTonicaCLI-linux && ./laTonicaCLI-linux`. |
-| **Windows** | `LaTonicaCLI-windows-v1.0.0.zip` | Descomprimeix i fes doble clic a `laTonicaCLI-windows.exe`. |
+
+> **Windows**: la versió de Windows és només el **CLI de text** (no l'app gràfica). El binari `.exe` es compila automàticament amb CI quan l'entorn Swift de Windows hi és disponible; si a la llista **Assets** del release no hi veus `LaTonicaCLI-windows-v1.0.0.zip`, compila'l tu mateix en 2 passos (instal·la el [Swift per a Windows](https://www.swift.org/download/#windows) + [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/) i executa `swift build -c release` a la carpeta `Multiplataforma`). Guia completa a la wiki → *Compilació i distribució*.
 
 Enllaços directes de descàrrega:
 - macOS: <https://github.com/jpuigbert/Latonicamagica/releases/download/v1.0.0/LaTonicaMagica-macOS-v1.0.0.dmg>
