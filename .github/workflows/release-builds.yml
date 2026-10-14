@@ -83,7 +83,13 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           # Carrega l'entorn de Visual Studio (cl/link + SDK) perquè SwiftPM pugui enllaçar.
-          $vs = & "${env:ProgramFiles}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          # vswhere.exe viu a «Program Files (x86)", no a «Program Files".
+          $vswhere = @(
+            "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe",
+            "${env:ProgramFiles}\Microsoft Visual Studio\Installer\vswhere.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $vswhere) { throw "No s'ha trobat vswhere.exe (Visual Studio absent?)" }
+          $vs = & $vswhere -latest -property installationPath
           Import-Module (Join-Path $vs "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
           Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
           $env:Path = "$env:SWIFT_BIN;$env:Path"
@@ -109,6 +115,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: "*"
@@ -117,6 +124,7 @@ jobs:
       - name: Reanomena amb la versió i puja a l'release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
         run: |
           set -uo pipefail
