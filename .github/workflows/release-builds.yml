@@ -78,14 +78,25 @@ jobs:
           $p = Start-Process -FilePath "$env:RUNNER_TEMP\swift.exe" -ArgumentList "/S" -Wait -PassThru
           Write-Host "Installer exit: $($p.ExitCode)"
           Start-Sleep -Seconds 10
-          $bin = (Get-ChildItem "C:\Library\Developer\Toolchains" -Recurse -Filter swift.exe -ErrorAction SilentlyContinue |
-                  Where-Object { $_.FullName -match '\\usr\\bin\\' } | Select-Object -First 1).DirectoryName
-          "SWIFT_BIN=$bin"    | Out-File -FilePath $env:GITHUB_ENV  -Append -Encoding utf8
-          $bin                 | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          # El 5.9.x s'instal·la a «C:\Library\Developer\Toolchains»; el 5.10.x,
+          # a «C:\Program Files\Swift\Toolchains…». Busquem a totes les arrels
+          # conegudes i, si no, preguntem al PATH.
+          $roots = @("C:\Library\Developer\Toolchains", "C:\Program Files\Swift", "C:\Program Files (x86)\Swift", "C:\Swift")
+          $cand = foreach ($r in $roots) {
+            if (Test-Path $r) {
+              Get-ChildItem $r -Recurse -Filter swift.exe -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\\usr\\bin\\' }
+            }
+          }
+          $bin = ($cand | Select-Object -First 1).DirectoryName
+          if (-not $bin) {
+            $g = (Get-Command swift.exe -ErrorAction SilentlyContinue) | Select-Object -First 1
+            if ($g) { $bin = Split-Path $g.Source }
+          }
+          if (-not $bin) { Write-Host "::error::No s'ha localitzat swift.exe despres d'instal·lar"; exit 0 }
+          "SWIFT_BIN=$bin" | Out-File -FilePath $env:GITHUB_ENV  -Append -Encoding utf8
+          $bin              | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           Write-Host "Swift toolchain a: $bin"
-          # La comprovació «--version» és només informativa: si l'eina triga a
-          # registrar-se pot tornar un codi != 0 immediatament. No l'hem de
-          # deixar com a error del pas; el veritable gate és el «swift build».
           & "$bin\swift.exe" --version 2>&1 | ForEach-Object { Write-Host $_ }
           exit 0
       - name: Compila el CLI
