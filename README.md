@@ -8,6 +8,24 @@ Joc educatiu per aprendre la **síl·laba tònica** de les paraules en català. 
 
 ---
 
+## ⬇️ Descàrrega (instal·lar sense compilar ni fer servir Git)
+
+Ves a la pestanya **[Releases](https://github.com/jpuigbert/Latonicamagica/releases/latest)** i baixa el fitxer del teu sistema. No cal instal·lar res més.
+
+| Sistema | Fitxer a baixar | Com instal·lar-lo |
+|---|---|---|
+| **macOS** | `LaTonicaMagica-macOS-v1.0.0.dmg` | Obre el DMG i **arrossega l'app a la carpeta Aplicacions** (com qualsevol programeta de Mac). |
+| **Linux** (64 bits) | `LaTonicaCLI-linux-v1.0.0.tar.gz` | Descomprimeix, i a la carpeta executa `chmod +x laTonicaCLI-linux && ./laTonicaCLI-linux`. |
+| **Windows** | `LaTonicaCLI-windows-v1.0.0.zip` | Descomprimeix i fes doble clic a `laTonicaCLI-windows.exe`. |
+
+Enllaços directes de descàrrega:
+- macOS: <https://github.com/jpuigbert/Latonicamagica/releases/download/v1.0.0/LaTonicaMagica-macOS-v1.0.0.dmg>
+- Linux: <https://github.com/jpuigbert/Latonicamagica/releases/download/v1.0.0/LaTonicaCLI-linux-v1.0.0.tar.gz>
+
+> **Primer cop a macOS**: com que l'app no està signada amb compte de desenvolupador d'Apple, obre-la la primera vegada amb **clic dret → Obre** (accepta l'avís). Els binaris de Linux i Windows del release es generen automàticament amb [GitHub Actions](https://github.com/jpuigbert/Latonicamagica/actions); si un dia falta algun, consulta la wiki → *Compilació i distribució*.
+
+---
+
 ## Com es juga
 
 1. Cada torn apareix una paraula (p. ex. `MÚSICA`).

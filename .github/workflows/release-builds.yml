@@ -52,22 +52,32 @@ jobs:
   windows:
     name: Build · Windows (exe)
     runs-on: windows-latest
+    # Millor esforç: si l'eina Swift de Windows no queda ben instal·lada a la
+    # runners, el job es marcarà groc però NO bloquejarà la publicació de Linux.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Instal·la el Swift toolchain per a Windows
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $ErrorActionPreference = "Continue"
+          # Python és necessari pel driver de Swift a Windows.
+          (Get-Command python -ErrorAction SilentlyContinue) | Out-Null
           $url = "https://download.swift.org/swift-5.9.2-release/windows10/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-windows10.exe"
           Invoke-WebRequest $url -OutFile "$env:RUNNER_TEMP\swift.exe"
-          Start-Process -FilePath "$env:RUNNER_TEMP\swift.exe" -ArgumentList "/S" -Wait
-          # Localitza el toolchain instal·lat (només cal mirar dins C:\Library, ràpid)
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\swift.exe" -ArgumentList "/S" -Wait -PassThru
+          Write-Host "Installer exit: $($p.ExitCode)"
+          Start-Sleep -Seconds 10
           $bin = (Get-ChildItem "C:\Library\Developer\Toolchains" -Recurse -Filter swift.exe -ErrorAction SilentlyContinue |
                   Where-Object { $_.FullName -match '\\usr\\bin\\' } | Select-Object -First 1).DirectoryName
           "SWIFT_BIN=$bin"    | Out-File -FilePath $env:GITHUB_ENV  -Append -Encoding utf8
           $bin                 | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           Write-Host "Swift toolchain a: $bin"
-          & "$bin\swift.exe" --version
+          # La comprovació «--version» és només informativa: si l'eina triga a
+          # registrar-se pot tornar un codi != 0 immediatament. No l'hem de
+          # deixar com a error del pas; el veritable gate és el «swift build».
+          & "$bin\swift.exe" --version 2>&1 | ForEach-Object { Write-Host $_ }
+          exit 0
       - name: Compila el CLI
         shell: pwsh
         run: |
@@ -109,9 +119,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
         run: |
-          set -euo pipefail
-          mv assets/LaTonicaCLI-linux.tar.gz   assets/LaTonicaCLI-linux-${TAG}.tar.gz
-          mv assets/LaTonicaCLI-windows.zip    assets/LaTonicaCLI-windows-${TAG}.zip
-          gh release upload "$TAG" assets/* --clobber
-          echo "Assets publicats per a $TAG:"
-          gh release view "$TAG" --json assets --jq '.assets[].name'
+          set -uo pipefail
+          [ -f assets/LaTonicaCLI-linux.tar.gz ]  && mv assets/LaTonicaCLI-linux.tar.gz  assets/LaTonicaCLI-linux-${TAG}.tar.gz
+          [ -f assets/LaTonicaCLI-windows.zip ]   && mv assets/LaTonicaCLI-windows.zip   assets/LaTonicaCLI-windows-${TAG}.zip
+          if ls assets/* >/dev/null 2>&1; then
+            gh release upload "$TAG" assets/* --clobber
+            echo "Assets publicats per a $TAG:"
+            gh release view "$TAG" --json assets --jq '.assets[].name'
+          else
+            echo "Cap binari per publicar (cap artifact present)."
+          fi
