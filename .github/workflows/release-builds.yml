@@ -95,9 +95,14 @@ jobs:
           $env:Path = "$env:SWIFT_BIN;$env:Path"
           Set-Location Multiplataforma
           & "$env:SWIFT_BIN\swift.exe" build -c release
-          $binpath = & "$env:SWIFT_BIN\swift.exe" build -c release --show-bin-path
+          # Localitza el binari real (el «--show-bin-path» pot venir buit o en
+          # diverses línies; busquem el .exe sota .build, que és infal·lible).
+          $exe = Get-ChildItem -Path .build -Recurse -Filter laTonicaCLI.exe -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+          if (-not $exe) { throw "No s'ha generat laTonicaCLI.exe (build fallit?)" }
+          Write-Host "Binari: $($exe.FullName)"
           New-Item -ItemType Directory -Force -Path pkg\LaTonicaCLI | Out-Null
-          Copy-Item "$binpath\laTonicaCLI.exe" pkg\LaTonicaCLI\laTonicaCLI-windows.exe
+          Copy-Item $exe.FullName pkg\LaTonicaCLI\laTonicaCLI-windows.exe
           Copy-Item COM-INSTALAR-windows.txt pkg\LaTonicaCLI\ -ErrorAction SilentlyContinue
       - name: Empaqueta el ZIP
         shell: pwsh
