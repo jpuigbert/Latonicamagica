@@ -81,25 +81,31 @@ jobs:
       - name: Compila el CLI
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $ErrorActionPreference = "Continue"
           # Carrega l'entorn de Visual Studio (cl/link + SDK) perquè SwiftPM pugui enllaçar.
           # vswhere.exe viu a «Program Files (x86)", no a «Program Files".
           $vswhere = @(
             "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe",
             "${env:ProgramFiles}\Microsoft Visual Studio\Installer\vswhere.exe"
           ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $vswhere) { throw "No s'ha trobat vswhere.exe (Visual Studio absent?)" }
+          if (-not $vswhere) { Write-Host "::error::No s'ha trobat vswhere.exe"; exit 1 }
           $vs = & $vswhere -latest -property installationPath
           Import-Module (Join-Path $vs "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
           Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
           $env:Path = "$env:SWIFT_BIN;$env:Path"
+          # DIAGNÒSTIC: confirma que swift.exe arrenca i ensenya la versió real.
+          Write-Host "--- swift --version ---"
+          & "$env:SWIFT_BIN\swift.exe" --version 2>&1 | ForEach-Object { Write-Host $_ }
+          Write-Host "exit version = $LASTEXITCODE"
           Set-Location Multiplataforma
-          & "$env:SWIFT_BIN\swift.exe" build -c release
+          Write-Host "--- swift build -c release ---"
+          & "$env:SWIFT_BIN\swift.exe" build -c release 2>&1 | Tee-Object -Variable buildout | ForEach-Object { Write-Host $_ }
+          Write-Host "exit build = $LASTEXITCODE"
           # Localitza el binari real (el «--show-bin-path» pot venir buit o en
           # diverses línies; busquem el .exe sota .build, que és infal·lible).
           $exe = Get-ChildItem -Path .build -Recurse -Filter laTonicaCLI.exe -ErrorAction SilentlyContinue |
                  Select-Object -First 1
-          if (-not $exe) { throw "No s'ha generat laTonicaCLI.exe (build fallit?)" }
+          if (-not $exe) { Write-Host "::error::No s'ha generat laTonicaCLI.exe"; exit 1 }
           Write-Host "Binari: $($exe.FullName)"
           New-Item -ItemType Directory -Force -Path pkg\LaTonicaCLI | Out-Null
           Copy-Item $exe.FullName pkg\LaTonicaCLI\laTonicaCLI-windows.exe
